@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = {
+  devIndicators: {
+    appIsrStatus: false,
+  },
+  experimental: {
+    // nonaktifkan devtools baru
+    nextScriptWorkers: false,
+  },
 };
 
 export default nextConfig;

@@ -33,16 +33,17 @@ export default function HomePage() {
 
           <p className="text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto text-slate-700">
             Sistem ini dikembangkan untuk mempermudah dan menertibkan proses
-            peminjaman, penempatan, dan pemantauan Barang Milik Negara (BMN)
-            di lingkungan Fakultas Sains dan Teknologi UIN Sultan Syarif Kasim Riau.
-            Melalui platform terintegrasi ini, civitas akademika dapat mengajukan
-            peminjaman, memantau status aset, dan menyusun laporan dengan cara yang
-            transparan, akuntabel, dan terdokumentasi.
+            peminjaman, penempatan, dan pemantauan Barang Milik Negara (BMN) di
+            lingkungan Fakultas Sains dan Teknologi UIN Sultan Syarif Kasim
+            Riau. Melalui platform terintegrasi ini, civitas akademika dapat
+            mengajukan peminjaman, memantau status aset, dan menyusun laporan
+            dengan cara yang transparan, akuntabel, dan terdokumentasi.
           </p>
 
           <p className="text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto text-slate-700 mt-4">
-            Sistem BMN FASTe hadir untuk mendukung kegiatan akademik yang tertib,
-            efisien, dan berkelanjutan, tanpa bergantung pada pencatatan manual.
+            Sistem BMN FASTe hadir untuk mendukung kegiatan akademik yang
+            tertib, efisien, dan berkelanjutan, tanpa bergantung pada pencatatan
+            manual.
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-4">
@@ -60,9 +61,9 @@ export default function HomePage() {
                 Our Teams
               </h2>
               <p className="text-[11px] sm:text-xs text-slate-600 max-w-md mx-auto">
-                Dikelola oleh tim pengelola BMN dan pengembang sistem
-                Fakultas Sains dan Teknologi untuk memastikan pengelolaan aset
-                yang tertib dan profesional.
+                Dikelola oleh tim pengelola BMN dan pengembang sistem Fakultas
+                Sains dan Teknologi untuk memastikan pengelolaan aset yang
+                tertib dan profesional.
               </p>
             </div>
           </div>

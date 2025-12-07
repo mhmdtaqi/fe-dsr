@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -91,8 +92,7 @@ export default function ScanPage() {
     return () => {
       const qr = qrRef.current;
       if (qr) {
-        qr
-          .stop()
+        qr.stop()
           .then(() => qr.clear())
           .catch(() => {});
       }

@@ -54,21 +54,7 @@ export default function AdminPeminjamanPage() {
       const res = await apiFetch(path, {}, token);
       let fetchedData = res.data ?? res;
 
-      // Filter based on role responsibility
-      const isStaffProdiItem = (jenis: string) => ["Proyektor", "Microphone", "Sound System"].includes(jenis);
-      if (user.role === "staff_prodi") {
-        fetchedData = fetchedData.filter((p: any) =>
-          p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
-        );
-      } else if (user.role === "kepala_bagian_akademik") {
-        fetchedData = fetchedData.filter((p: any) =>
-          !p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
-        );
-      } else if (user.role === "staff") {
-        fetchedData = fetchedData.filter((p: any) =>
-          !p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
-        );
-      }
+      // All roles can see all loans
 
       setData(fetchedData);
     } catch (err: any) {
@@ -118,13 +104,14 @@ export default function AdminPeminjamanPage() {
 
   const handleActivate = async (id: number) => {
     if (!token || !user) return;
-    if (!["staff", "staff_prodi"].includes(user.role)) return;
+    if (!["staff", "staff_prodi", "kepala_bagian_akademik"].includes(user.role)) return;
 
     const p = data.find(d => d.id === id);
     if (!p) return;
     const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
+    if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
 
     try {
       await apiFetch(
@@ -142,13 +129,14 @@ export default function AdminPeminjamanPage() {
 
   const handleReturn = async (id: number) => {
     if (!token || !user) return;
-    if (!["staff", "staff_prodi"].includes(user.role)) return;
+    if (!["staff", "staff_prodi", "kepala_bagian_akademik"].includes(user.role)) return;
 
     const p = data.find(d => d.id === id);
     if (!p) return;
     const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
+    if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
 
     try {
       await apiFetch(
@@ -254,13 +242,15 @@ export default function AdminPeminjamanPage() {
                       {(() => {
                         if (!user) return null;
                         const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
+                        const canVerify = (user.role === "staff_prodi" && isStaffProdiLoan) ||
+                          (user.role === "kepala_bagian_akademik" && !isStaffProdiLoan);
                         const canAct = (user.role === "staff_prodi" && isStaffProdiLoan) ||
                           (user.role === "staff" && !isStaffProdiLoan) ||
                           (user.role === "kepala_bagian_akademik" && !isStaffProdiLoan);
                         if (!canAct) return null;
                         return (
                           <>
-                            {p.status === "booking" && (
+                            {p.status === "booking" && canVerify && (
                               <>
                                 <Button
                                   type="button"

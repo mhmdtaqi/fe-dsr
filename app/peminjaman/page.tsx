@@ -21,6 +21,8 @@ export default function PeminjamanPage() {
   const [data, setData] = useState<Peminjaman[]>([]);
   const [barangList, setBarangList] = useState<Barang[]>([]);
   const [lokasiList, setLokasiList] = useState<Lokasi[]>([]);
+  const [selectedBarang, setSelectedBarang] = useState<Barang | null>(null);
+  const [activeTab, setActiveTab] = useState<'barang' | 'lokasi' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +58,14 @@ export default function PeminjamanPage() {
 
     load();
   }, [router, token, user, clearAuthStore]);
+
+  const handleSelectLokasi = (l: Lokasi) => {
+    if (selectedBarang) {
+      router.push(`/peminjaman/buat?type=items&nup=${selectedBarang.nup}&kodeLokasi=${l.kode_lokasi}`);
+    } else {
+      router.push(`/peminjaman/buat?type=location&kodeLokasi=${l.kode_lokasi}`);
+    }
+  };
 
   if (loading) return <div className="p-6">Memuat...</div>;
 
@@ -125,61 +135,56 @@ export default function PeminjamanPage() {
         )}
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Daftar Barang Unit</h2>
-          {barangList.length === 0 ? (
-            <p className="text-sm text-slate-500">Tidak ada data barang.</p>
-          ) : (
-            <div className="overflow-x-auto rounded border bg-white">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-100 text-left">
-                  <tr>
-                    <th className="px-3 py-2">NUP</th>
-                    <th className="px-3 py-2">Jenis Barang</th>
-                    <th className="px-3 py-2">Merek</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {barangList.map((b: any) => (
-                    <tr key={b.nup} className="border-t">
-                      <td className="px-3 py-2">{b.nup}</td>
-                      <td className="px-3 py-2">{b.dataBarang?.jenis_barang}</td>
-                      <td className="px-3 py-2">{b.dataBarang?.merek}</td>
-                      <td className="px-3 py-2">{b.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+            <button onClick={() => setActiveTab(activeTab === 'barang' ? null : 'barang')} className="w-full text-left font-semibold text-lg">Card Barang</button>
+            {activeTab === 'barang' && (
+              <div className="mt-4">
+                {selectedBarang && (
+                  <div className="mb-4 p-2 bg-blue-50 border rounded">
+                    <p className="text-sm">Barang Terpilih: {selectedBarang.nup} - {selectedBarang.dataBarang?.jenis_barang}</p>
+                    <button onClick={() => setSelectedBarang(null)} className="text-xs text-red-600 underline">Batal Pilih</button>
+                  </div>
+                )}
+                {barangList.length === 0 ? (
+                  <p className="text-sm text-slate-500">Tidak ada data barang.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {barangList.map((b: any) => (
+                      <div key={b.nup} className={`bg-white border border-slate-200 rounded-lg p-4 shadow-sm ${selectedBarang?.nup === b.nup ? 'ring-2 ring-blue-500' : ''}`}>
+                        <h3 className="font-medium text-slate-900">{b.nup}</h3>
+                        <p className="text-sm text-slate-600">Jenis: {b.dataBarang?.jenis_barang}</p>
+                        <p className="text-sm text-slate-600">Merek: {b.dataBarang?.merek}</p>
+                        <p className="text-sm text-slate-600">Status: {b.status}</p>
+                        <Button onClick={() => { setSelectedBarang(b); setActiveTab('lokasi'); }} size="sm" className="mt-2">Pilih</Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Daftar Lokasi</h2>
-          {lokasiList.length === 0 ? (
-            <p className="text-sm text-slate-500">Tidak ada data lokasi.</p>
-          ) : (
-            <div className="overflow-x-auto rounded border bg-white">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-100 text-left">
-                  <tr>
-                    <th className="px-3 py-2">Kode Lokasi</th>
-                    <th className="px-3 py-2">Lokasi</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lokasiList.map((l: any) => (
-                    <tr key={l.kode_lokasi} className="border-t">
-                      <td className="px-3 py-2">{l.kode_lokasi}</td>
-                      <td className="px-3 py-2">{l.lokasi}</td>
-                      <td className="px-3 py-2">{l.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+            <button onClick={() => setActiveTab(activeTab === 'lokasi' ? null : 'lokasi')} className="w-full text-left font-semibold text-lg">Card Lokasi</button>
+            {activeTab === 'lokasi' && (
+              <div className="mt-4">
+                {lokasiList.length === 0 ? (
+                  <p className="text-sm text-slate-500">Tidak ada data lokasi.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {lokasiList.map((l: any) => (
+                      <div key={l.kode_lokasi} className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                        <h3 className="font-medium text-slate-900">{l.kode_lokasi}</h3>
+                        <p className="text-sm text-slate-600">Lokasi: {l.lokasi}</p>
+                        <p className="text-sm text-slate-600">Status: {l.status}</p>
+                        <Button onClick={() => handleSelectLokasi(l)} size="sm" className="mt-2">{selectedBarang ? 'Pinjam Barang di Lokasi Ini' : 'Pinjam Lokasi'}</Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

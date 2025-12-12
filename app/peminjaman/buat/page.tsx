@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ClipboardPen, ArrowLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -22,6 +22,7 @@ export default function BuatPeminjamanPage() {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const clearAuthStore = useAuthStore((s) => s.clearAuth);
+  const searchParams = useSearchParams();
 
   const [lokasiList, setLokasiList] = useState<Lokasi[]>([]);
   const [barangList, setBarangList] = useState<Barang[]>([]);
@@ -76,6 +77,16 @@ export default function BuatPeminjamanPage() {
 
     load();
   }, [router, token, user, clearAuthStore]);
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'location') setLoanType('location');
+    if (type === 'items') setLoanType('items');
+    const kode = searchParams.get('kodeLokasi');
+    if (kode) setKodeLokasi(kode);
+    const nup = searchParams.get('nup');
+    if (nup) setNupText(nup);
+  }, [searchParams]);
 
   const addNup = (nup: string) => {
     setNupText((prev) => {

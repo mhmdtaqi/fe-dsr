@@ -55,16 +55,20 @@ export default function AdminPeminjamanPage() {
       let fetchedData = res.data ?? res;
 
       // Filter based on role responsibility
+      const isStaffProdiItem = (jenis: string) => ["Proyektor", "Microphone", "Sound System"].includes(jenis);
       if (user.role === "staff_prodi") {
         fetchedData = fetchedData.filter((p: any) =>
-          p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor")
+          p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
+        );
+      } else if (user.role === "kepala_bagian_akademik") {
+        fetchedData = fetchedData.filter((p: any) =>
+          !p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
         );
       } else if (user.role === "staff") {
         fetchedData = fetchedData.filter((p: any) =>
-          !p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor")
+          !p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang))
         );
       }
-      // kepala_bagian_akademik sees all
 
       setData(fetchedData);
     } catch (err: any) {
@@ -85,13 +89,15 @@ export default function AdminPeminjamanPage() {
     await loadData();
   };
 
+  const isStaffProdiItem = (jenis: string) => ["Proyektor", "Microphone", "Sound System"].includes(jenis);
+
   const handleVerify = async (id: number, verifikasi: "diterima" | "ditolak") => {
     if (!token || !user) return;
     if (!["staff_prodi", "kepala_bagian_akademik"].includes(user.role)) return;
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor");
+    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
     if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
 
@@ -116,7 +122,7 @@ export default function AdminPeminjamanPage() {
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor");
+    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
 
@@ -140,7 +146,7 @@ export default function AdminPeminjamanPage() {
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor");
+    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
 
@@ -247,7 +253,7 @@ export default function AdminPeminjamanPage() {
                     <td className="px-3 py-2 space-x-1">
                       {(() => {
                         if (!user) return null;
-                        const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => pb.barangUnit?.dataBarang?.jenis_barang === "Proyektor");
+                        const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
                         const canAct = (user.role === "staff_prodi" && isStaffProdiLoan) ||
                           (user.role === "staff" && !isStaffProdiLoan) ||
                           (user.role === "kepala_bagian_akademik" && !isStaffProdiLoan);

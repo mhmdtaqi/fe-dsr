@@ -127,9 +127,9 @@ export default function MonitoringSubPage() {
       case "semua-barang":
       case "barang-non-proyektor":
       case "proyektor":
-        return ["NUP", "Jenis Barang", "Merek", "Lokasi", "Status"];
+        return ["NUP", "Jenis Barang", "Merek", "Lokasi", "Status", "Status Booking"];
       case "semua-lokasi":
-        return ["Kode Lokasi", "Lokasi", "Status"];
+        return ["Kode Lokasi", "Lokasi", "Status", "Status Booking"];
       default:
         return [];
     }
@@ -169,6 +169,7 @@ export default function MonitoringSubPage() {
             <td className="px-4 py-2">{item.dataBarang?.merek}</td>
             <td className="px-4 py-2">{item.dataLokasi?.lokasi}</td>
             <td className="px-4 py-2">{item.status}</td>
+            <td className="px-4 py-2">{item.peminjamanItems?.[0]?.peminjaman?.verifikasi || "-"}</td>
           </tr>
         );
       case "semua-lokasi":
@@ -177,6 +178,7 @@ export default function MonitoringSubPage() {
             <td className="px-4 py-2">{item.kode_lokasi}</td>
             <td className="px-4 py-2">{item.lokasi}</td>
             <td className="px-4 py-2">{item.status}</td>
+            <td className="px-4 py-2">{item.peminjamanP?.[0]?.verifikasi || "-"}</td>
           </tr>
         );
       default:

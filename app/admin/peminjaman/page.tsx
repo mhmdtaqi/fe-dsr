@@ -83,7 +83,7 @@ export default function AdminPeminjamanPage() {
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
+    const isStaffProdiLoan = p.items?.some((item: any) => isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
     if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
 
@@ -108,7 +108,7 @@ export default function AdminPeminjamanPage() {
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
+    const isStaffProdiLoan = p.items?.some((item: any) => isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
     if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
@@ -133,7 +133,7 @@ export default function AdminPeminjamanPage() {
 
     const p = data.find(d => d.id === id);
     if (!p) return;
-    const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
+    const isStaffProdiLoan = p.items?.some((item: any) => isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang));
     if (user.role === "staff" && isStaffProdiLoan) return;
     if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
     if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
@@ -224,6 +224,7 @@ export default function AdminPeminjamanPage() {
                   <th className="px-3 py-2">Peminjam</th>
                   <th className="px-3 py-2">Agenda</th>
                   <th className="px-3 py-2">Barang Dipinjam</th>
+                  <th className="px-3 py-2">Lokasi</th>
                   <th className="px-3 py-2">Status</th>
                   <th className="px-3 py-2">Verifikasi</th>
                   <th className="px-3 py-2">Aksi</th>
@@ -235,19 +236,20 @@ export default function AdminPeminjamanPage() {
                     <td className="px-3 py-2">{p.id}</td>
                     <td className="px-3 py-2">{p.user?.nama ?? "-"}</td>
                     <td className="px-3 py-2">{p.Agenda}</td>
-                    <td className="px-3 py-2">{p.peminjamanBarang?.map((pb: any) => pb.barangUnit?.dataBarang?.nama_barang).join(", ") || "-"}</td>
+                    <td className="px-3 py-2">{p.items?.map((item: any) => `${item.barangUnit?.dataBarang?.jenis_barang} (${item.barangUnit?.dataBarang?.merek})`).join(", ") || "-"}</td>
+                    <td className="px-3 py-2">{p.lokasi?.lokasi || p.lokasiTambahan || "-"}</td>
                     <td className="px-3 py-2">{p.status}</td>
                     <td className="px-3 py-2">{p.verifikasi}</td>
                     <td className="px-3 py-2 space-x-1">
                       {(() => {
                         if (!user) return null;
-                        const isStaffProdiLoan = p.peminjamanBarang?.some((pb: any) => isStaffProdiItem(pb.barangUnit?.dataBarang?.jenis_barang));
+                        const isStaffProdiLoan = p.items?.some((item: any) => isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang));
                         const canVerify = (user.role === "staff_prodi" && isStaffProdiLoan) ||
                           (user.role === "kepala_bagian_akademik" && !isStaffProdiLoan);
-                        const canAct = (user.role === "staff_prodi" && isStaffProdiLoan) ||
+                        const canActivate = (user.role === "staff_prodi" && isStaffProdiLoan) ||
                           (user.role === "staff" && !isStaffProdiLoan) ||
                           (user.role === "kepala_bagian_akademik" && !isStaffProdiLoan);
-                        if (!canAct) return null;
+                        const canReturn = canActivate;
                         return (
                           <>
                             {p.status === "booking" && canVerify && (
@@ -271,7 +273,7 @@ export default function AdminPeminjamanPage() {
                               </>
                             )}
 
-                            {p.status === "booking" && p.verifikasi === "diterima" && (
+                            {p.status === "booking" && p.verifikasi === "diterima" && canActivate && (
                               <Button
                                 type="button"
                                 size="sm"
@@ -282,7 +284,7 @@ export default function AdminPeminjamanPage() {
                               </Button>
                             )}
 
-                            {p.status === "aktif" && (
+                            {p.status === "aktif" && canReturn && (
                               <Button
                                 type="button"
                                 size="sm"
@@ -313,7 +315,7 @@ export default function AdminPeminjamanPage() {
                   <tr>
                     <td
                       className="px-3 py-4 text-center text-slate-500"
-                      colSpan={7}
+                      colSpan={8}
                     >
                       Tidak ada data.
                     </td>

@@ -11,6 +11,7 @@ import {
   User2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 
@@ -32,7 +33,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     if (!adminRoles.includes(user.role)) {
       router.replace("/peminjaman");
+      return;
     }
+
+    // Validate token
+    apiFetch("/auth/me", {}, token)
+      .then(() => {
+        // Token valid
+      })
+      .catch(() => {
+        clearAuthStore();
+        router.replace("/login");
+      });
   }, [router, token, user, clearAuthStore]);
 
   const isActive = (href: string) =>

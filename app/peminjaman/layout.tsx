@@ -14,9 +14,12 @@ export default function PeminjamanLayout({ children }: { children: ReactNode }) 
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
   const clearAuthStore = useAuthStore((s) => s.clearAuth);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (!token || !user) {
       clearAuthStore();
       router.replace("/login");
@@ -37,7 +40,18 @@ export default function PeminjamanLayout({ children }: { children: ReactNode }) 
         clearAuthStore();
         router.replace("/login");
       });
-  }, [router, token, user, clearAuthStore]);
+  }, [isHydrated, router, token, user, clearAuthStore]);
+
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-slate-600">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");

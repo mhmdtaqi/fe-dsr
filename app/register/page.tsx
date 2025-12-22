@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { UserPlus, User, Mail, Lock, CreditCard, BadgeCheck } from "lucide-react";
+import {
+  UserPlus,
+  User,
+  Mail,
+  Lock,
+  CreditCard,
+  BadgeCheck,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -13,18 +20,26 @@ import { toast } from "sonner"; // Pakai sonner untuk notifikasi
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export default function RegisterPage() {
   const router = useRouter();
-  
+
   const [nik, setNik] = useState("");
   const [nomorIT, setNomorIT] = useState("");
   const [email, setEmail] = useState("");
   const [nama, setNama] = useState("");
   const [password, setPassword] = useState("");
-  
+  const [jurusan, setJurusan] = useState("umum");
+
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +58,7 @@ export default function RegisterPage() {
         email,
         password,
         nama,
+        jurusan,
       };
 
       await apiFetch("/auth/register", {
@@ -56,7 +72,6 @@ export default function RegisterPage() {
 
       // Redirect setelah sukses
       setTimeout(() => router.push("/login"), 1500);
-
     } catch (err: any) {
       console.error("REGISTER ERROR", err);
       toast.error("Registrasi Gagal", {
@@ -70,7 +85,7 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
       <Header />
-      
+
       <LoadingOverlay isLoading={loading} message="Mendaftarkan akun..." />
 
       <main className="flex flex-1 items-center justify-center p-4 sm:p-8">
@@ -95,7 +110,6 @@ export default function RegisterPage() {
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                
                 {/* Grid 2 Kolom untuk Identitas */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -144,6 +158,24 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="jurusan">Jurusan</Label>
+                  <select
+                    id="jurusan"
+                    value={jurusan}
+                    onChange={(e) => setJurusan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="umum">Umum</option>
+                    <option value="tif">Teknik Informatika</option>
+                    <option value="ti">Teknik Industri</option>
+                    <option value="si">Sistem Informasi</option>
+                    <option value="mt">Matematika Terapan</option>
+                    <option value="te">Teknik Elektro</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="email">Email Institusi</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -180,9 +212,9 @@ export default function RegisterPage() {
                   </p>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-slate-900 text-white hover:bg-slate-800 mt-2" 
+                <Button
+                  type="submit"
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 mt-2"
                   disabled={loading}
                 >
                   {loading ? "Memproses..." : "Daftar Sekarang"}
@@ -214,8 +246,21 @@ export default function RegisterPage() {
 // Icon kecil manual untuk hint
 function AlertCircleIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
-      <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-slate-400"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" x2="12" y1="8" y2="12" />
+      <line x1="12" x2="12.01" y1="16" y2="16" />
     </svg>
-  )
+  );
 }

@@ -13,6 +13,7 @@ import {
 import { useAuthStore } from "@/lib/auth-store";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const adminRoles = ["staff", "staff_prodi", "kepala_bagian_akademik"];
@@ -69,7 +70,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-slate-950">
+      <Header />
       <div className="flex flex-1">
         <motion.aside
           className="w-64 bg-slate-900 text-slate-100 flex flex-col"

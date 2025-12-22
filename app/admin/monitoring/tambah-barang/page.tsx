@@ -9,7 +9,15 @@ import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Header } from "@/components/Header";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const allowedRoles = ["staff"];
 
@@ -232,8 +240,13 @@ export default function TambahBarangPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100">
-      <Header />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 sm:p-8"
+    >
+      <LoadingOverlay isLoading={loading} message="Menyimpan barang..." />
 
       <motion.div
         className="space-y-6 bg-slate-50 p-6"
@@ -254,86 +267,110 @@ export default function TambahBarangPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow space-y-4">
-            <h2 className="text-lg font-medium">Data Barang</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="barangCombined">
-                  Jenis Barang - Merek (Kode Barang)
-                </Label>
-                <Input
-                  id="barangCombined"
-                  value={formData.barangCombined}
-                  onChange={(e) =>
-                    handleInputChange("barangCombined", e.target.value)
-                  }
-                  placeholder="Contoh: Proyektor - Epson (PROJ) atau ketik baru"
-                  required
-                  list="barang_combined_list"
-                />
-                <datalist id="barang_combined_list">
-                  {dataBarangList.map((db) => (
-                    <option
-                      key={db.kode_barang}
-                      value={`${db.jenis_barang} - ${db.merek} (${db.kode_barang})`}
-                    />
-                  ))}
-                </datalist>
+          <Card className="shadow-lg border-slate-200 dark:border-slate-800">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+              <CardTitle className="text-base">Data Barang</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label htmlFor="barangCombined">
+                    Jenis Barang - Merek (Kode Barang)
+                  </Label>
+                  <Input
+                    id="barangCombined"
+                    value={formData.barangCombined}
+                    onChange={(e) =>
+                      handleInputChange("barangCombined", e.target.value)
+                    }
+                    placeholder="Contoh: Proyektor - Epson (PROJ) atau ketik baru"
+                    required
+                    list="barang_combined_list"
+                  />
+                  <datalist id="barang_combined_list">
+                    {dataBarangList.map((db) => (
+                      <option
+                        key={db.kode_barang}
+                        value={`${db.jenis_barang} - ${db.merek} (${db.kode_barang})`}
+                      />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <Label htmlFor="nup">NUP (Otomatis)</Label>
+                  <Input
+                    id="nup"
+                    value={formData.nup}
+                    readOnly
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lokasi">Lokasi</Label>
+                  <Select
+                    value={formData.lokasi}
+                    onValueChange={(value) =>
+                      handleInputChange("lokasi", value)
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Pilih lokasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lokasiList.map((lok) => (
+                        <SelectItem
+                          key={lok.kode_lokasi}
+                          value={lok.kode_lokasi}
+                        >
+                          {lok.lokasi}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      handleInputChange("status", value)
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tersedia">Tersedia</SelectItem>
+                      <SelectItem value="TidakTersedia">
+                        Tidak Tersedia
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="jurusan">Jurusan</Label>
+                  <Select
+                    value={formData.jurusan}
+                    onValueChange={(value) =>
+                      handleInputChange("jurusan", value)
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="umum">Umum</SelectItem>
+                      <SelectItem value="tif">TIF</SelectItem>
+                      <SelectItem value="ti">TI</SelectItem>
+                      <SelectItem value="si">SI</SelectItem>
+                      <SelectItem value="mt">MT</SelectItem>
+                      <SelectItem value="te">TE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="nup">NUP (Otomatis)</Label>
-                <Input
-                  id="nup"
-                  value={formData.nup}
-                  readOnly
-                  className="bg-gray-100"
-                />
-              </div>
-              <div>
-                <Label htmlFor="lokasi">Lokasi</Label>
-                <select
-                  id="lokasi"
-                  value={formData.lokasi}
-                  onChange={(e) => handleInputChange("lokasi", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Pilih lokasi</option>
-                  {lokasiList.map((lok) => (
-                    <option key={lok.kode_lokasi} value={lok.kode_lokasi}>
-                      {lok.lokasi}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => handleInputChange("status", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="Tersedia">Tersedia</option>
-                  <option value="TidakTersedia">Tidak Tersedia</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="jurusan">Jurusan</Label>
-                <select
-                  id="jurusan"
-                  value={formData.jurusan}
-                  onChange={(e) => handleInputChange("jurusan", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="umum">Umum</option>
-                  <option value="tif">TIF</option>
-                </select>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded">
@@ -349,6 +386,6 @@ export default function TambahBarangPage() {
           </div>
         </form>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

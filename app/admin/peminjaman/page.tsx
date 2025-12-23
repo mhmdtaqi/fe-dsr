@@ -51,7 +51,7 @@ export default function AdminPeminjamanPage() {
         params.toString() ? `?${params.toString()}` : ""
       }`;
 
-      const res = await apiFetch(path, {}, token);
+      const res = await apiFetch(path, {}, token || undefined);
       let fetchedData = res.data ?? res;
 
       // Filter for staff_prodi: only show loans with tif items
@@ -80,32 +80,10 @@ export default function AdminPeminjamanPage() {
     await loadData();
   };
 
-  const isStaffProdiItem = (jenis: string) =>
-    ["Proyektor", "Microphone", "Sound System"].includes(jenis);
-
   const handleVerify = async (
     id: number,
     verifikasi: "diterima" | "ditolak"
   ) => {
-    if (!token || !user) return;
-    if (!["staff", "staff_prodi", "kepala_bagian_akademik"].includes(user.role))
-      return;
-
-    const p = data.find((d) => d.id === id);
-    if (!p) return;
-    const isStaffProdiLoan = p.items?.some((item: any) =>
-      isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang)
-    );
-    if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
-    if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
-    if (user.role === "staff") {
-      const semuaBarangUmum = p.items?.every(
-        (item: any) => item.barangUnit?.jurusan === "umum"
-      );
-      const lokasiUmum = !p.kodeLokasi || p.lokasi?.jurusan === "umum";
-      if (!semuaBarangUmum || !lokasiUmum) return;
-    }
-
     try {
       await apiFetch(
         `/peminjaman/verify/${id}`,
@@ -113,79 +91,49 @@ export default function AdminPeminjamanPage() {
           method: "PUT",
           body: JSON.stringify({ verifikasi }),
         },
-        token
+        token || undefined
       );
       await loadData();
     } catch (err: any) {
-      alert(err.message || "Gagal memverifikasi");
+      console.error("VERIFY ERROR", err);
+      setError(err.message || "Gagal memverifikasi peminjaman");
     }
   };
 
   const handleActivate = async (id: number) => {
-    if (!token || !user) return;
-    if (!["staff", "staff_prodi", "kepala_bagian_akademik"].includes(user.role))
-      return;
-
-    const p = data.find((d) => d.id === id);
-    if (!p) return;
-    const isStaffProdiLoan = p.items?.some((item: any) =>
-      isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang)
-    );
-    const semuaBarangUmum = p.items?.every(
-      (item: any) => item.barangUnit?.jurusan === "umum"
-    );
-    const lokasiUmum = !p.kodeLokasi || p.lokasi?.jurusan === "umum";
-    const isUmumLoan = semuaBarangUmum && lokasiUmum;
-    if (user.role === "staff" && !isUmumLoan) return;
-    if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
-    if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
-
     try {
       await apiFetch(
         `/peminjaman/activate/${id}`,
         {
           method: "PUT",
         },
-        token
+        token || undefined
       );
       await loadData();
     } catch (err: any) {
-      alert(err.message || "Gagal mengaktifkan");
+      console.error("ACTIVATE ERROR", err);
+      setError(err.message || "Gagal mengaktifkan peminjaman");
     }
   };
 
   const handleReturn = async (id: number) => {
-    if (!token || !user) return;
-    if (!["staff", "staff_prodi", "kepala_bagian_akademik"].includes(user.role))
-      return;
-
-    const p = data.find((d) => d.id === id);
-    if (!p) return;
-    const isStaffProdiLoan = p.items?.some((item: any) =>
-      isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang)
-    );
-    const semuaBarangUmum = p.items?.every(
-      (item: any) => item.barangUnit?.jurusan === "umum"
-    );
-    const lokasiUmum = !p.kodeLokasi || p.lokasi?.jurusan === "umum";
-    const isUmumLoan = semuaBarangUmum && lokasiUmum;
-    if (user.role === "staff" && !isUmumLoan) return;
-    if (user.role === "staff_prodi" && !isStaffProdiLoan) return;
-    if (user.role === "kepala_bagian_akademik" && isStaffProdiLoan) return;
-
     try {
       await apiFetch(
         `/peminjaman/return/${id}`,
         {
           method: "PUT",
         },
-        token
+        token || undefined
       );
       await loadData();
     } catch (err: any) {
-      alert(err.message || "Gagal mengembalikan");
+      console.error("RETURN ERROR", err);
+      setError(err.message || "Gagal mengembalikan peminjaman");
     }
   };
+
+  const isStaffProdiItem = (jenis: string) =>
+    ["Proyektor", "Microphone", "Sound System"].includes(jenis);
 
   if (loading) return <div className="p-6">Memuat...</div>;
 
@@ -314,30 +262,32 @@ export default function AdminPeminjamanPage() {
                           const canReturn = canActivate;
                           return (
                             <>
-                              {p.status === "booking" && canVerify && (
-                                <>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    className="px-2 py-1 bg-emerald-600 text-white"
-                                    onClick={() =>
-                                      handleVerify(p.id, "diterima")
-                                    }
-                                  >
-                                    Terima
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    className="px-2 py-1 bg-red-600 text-white"
-                                    onClick={() =>
-                                      handleVerify(p.id, "ditolak")
-                                    }
-                                  >
-                                    Tolak
-                                  </Button>
-                                </>
-                              )}
+                              {p.status === "booking" &&
+                                p.verifikasi === "pending" &&
+                                canVerify && (
+                                  <>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="px-2 py-1 bg-emerald-600 text-white"
+                                      onClick={() =>
+                                        handleVerify(p.id, "diterima")
+                                      }
+                                    >
+                                      Terima
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="px-2 py-1 bg-red-600 text-white"
+                                      onClick={() =>
+                                        handleVerify(p.id, "ditolak")
+                                      }
+                                    >
+                                      Tolak
+                                    </Button>
+                                  </>
+                                )}
 
                               {p.status === "booking" &&
                                 p.verifikasi === "diterima" &&

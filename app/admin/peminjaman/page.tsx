@@ -31,17 +31,14 @@ export default function AdminPeminjamanPage() {
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
 
-  // State Data
   const [rawData, setRawData] = useState<Peminjaman[]>([]);
   const [filteredData, setFilteredData] = useState<Peminjaman[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // State Filter UI
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [verifFilter, setVerifFilter] = useState("all");
 
-  // 1. Initial Load
   useEffect(() => {
     if (!token || !user) {
       clearAuth();
@@ -56,11 +53,9 @@ export default function AdminPeminjamanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2. Logic Filter Frontend
   useEffect(() => {
     let result = rawData;
 
-    // Filter Search (Nama / Agenda)
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       result = result.filter(
@@ -70,12 +65,10 @@ export default function AdminPeminjamanPage() {
       );
     }
 
-    // Filter Status Peminjaman
     if (statusFilter !== "all") {
       result = result.filter((item) => item.status === statusFilter);
     }
 
-    // Filter Status Verifikasi
     if (verifFilter !== "all") {
       result = result.filter((item) => {
         const verif = item.verifikasi || item.status_verifikasi || "pending";
@@ -86,7 +79,6 @@ export default function AdminPeminjamanPage() {
     setFilteredData(result);
   }, [searchTerm, statusFilter, verifFilter, rawData]);
 
-  // Load Data dari API
   const loadData = async () => {
     setLoading(true);
     try {
@@ -94,7 +86,6 @@ export default function AdminPeminjamanPage() {
       let fetchedData = res.data ?? res;
       fetchedData = Array.isArray(fetchedData) ? fetchedData : [];
 
-      // Filter khusus staff_prodi (hanya lihat barang jurusan TIF)
       if (user?.role === "staff_prodi") {
         fetchedData = fetchedData.filter((p: any) =>
           p.items?.some((item: any) => item.barangUnit?.jurusan === "tif")
@@ -110,15 +101,17 @@ export default function AdminPeminjamanPage() {
     }
   };
 
-  // --- ACTIONS (FIXED ENDPOINTS) ---
-  
+  // --- ACTIONS (FIXED URLS) ---
+
   const handleVerify = async (id: number, verifikasi: "diterima" | "ditolak") => {
     try {
       toast.loading("Memproses verifikasi...");
-      // FIX: URL menjadi /peminjaman/{id}/verifikasi dan body menggunakan status_verifikasi
-      await apiFetch(`/peminjaman/${id}/verifikasi`, {
+      
+      // FIXED: URL sesuai backend router: /verify/:id
+      // FIXED: Body key sesuai validator: 'verifikasi'
+      await apiFetch(`/peminjaman/verify/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ status_verifikasi: verifikasi }),
+        body: JSON.stringify({ verifikasi: verifikasi }), 
       }, token || undefined);
       
       toast.dismiss();
@@ -133,8 +126,9 @@ export default function AdminPeminjamanPage() {
   const handleActivate = async (id: number) => {
     try {
       toast.loading("Mengaktifkan peminjaman...");
-      // FIX: URL menjadi /peminjaman/{id}/activate
-      await apiFetch(`/peminjaman/${id}/activate`, { 
+      
+      // FIXED: URL sesuai backend router: /activate/:id
+      await apiFetch(`/peminjaman/activate/${id}`, { 
         method: "PUT" 
       }, token || undefined);
       
@@ -150,8 +144,9 @@ export default function AdminPeminjamanPage() {
   const handleReturn = async (id: number) => {
     try {
       toast.loading("Menyelesaikan peminjaman...");
-      // FIX: URL menjadi /peminjaman/{id}/return
-      await apiFetch(`/peminjaman/${id}/return`, { 
+      
+      // FIXED: URL sesuai backend router: /return/:id
+      await apiFetch(`/peminjaman/return/${id}`, { 
         method: "PUT" 
       }, token || undefined);
       
@@ -175,13 +170,11 @@ export default function AdminPeminjamanPage() {
     >
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header Title */}
         <div className="flex items-center gap-2 mb-6">
           <ClipboardList className="w-6 h-6 text-slate-700" />
           <h1 className="text-2xl font-bold text-slate-900">Manajemen Peminjaman</h1>
         </div>
 
-        {/* --- FILTER & SEARCH CARD --- */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
             <div className="flex items-center justify-between">
@@ -193,7 +186,6 @@ export default function AdminPeminjamanPage() {
           </CardHeader>
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4 items-end">
-                {/* Search Input */}
                 <div className="w-full md:flex-1 space-y-1">
                     <Label className="text-xs font-medium text-slate-500">Pencarian</Label>
                     <div className="relative">
@@ -207,7 +199,6 @@ export default function AdminPeminjamanPage() {
                     </div>
                 </div>
 
-                {/* Filter Status Peminjaman */}
                 <div className="w-full md:w-48 space-y-1">
                     <Label className="text-xs font-medium text-slate-500">Status Peminjaman</Label>
                     <select
@@ -223,7 +214,6 @@ export default function AdminPeminjamanPage() {
                     </select>
                 </div>
 
-                {/* Filter Status Verifikasi */}
                 <div className="w-full md:w-48 space-y-1">
                     <Label className="text-xs font-medium text-slate-500">Status Verifikasi</Label>
                     <select
@@ -241,7 +231,6 @@ export default function AdminPeminjamanPage() {
           </CardContent>
         </Card>
 
-        {/* --- TABLE CARD --- */}
         <Card className="overflow-hidden border-slate-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">

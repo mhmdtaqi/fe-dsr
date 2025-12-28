@@ -54,8 +54,7 @@ export default function AkunPage() {
   }, [user, token, router, clearAuth]);
 
   const handleChange =
-    (field: keyof FormState) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
@@ -73,6 +72,13 @@ export default function AkunPage() {
       if (form.password.length < 8) {
         toast.error("Validasi Gagal", {
           description: "Password minimal 8 karakter.",
+        });
+        return;
+      }
+      if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
+        toast.error("Validasi Gagal", {
+          description:
+            "Password harus mengandung huruf besar, huruf kecil, dan angka.",
         });
         return;
       }
@@ -203,7 +209,9 @@ export default function AkunPage() {
                 <CardHeader>
                   <CardTitle>Ganti Password</CardTitle>
                   <CardDescription>
-                    Kosongkan jika tidak ingin mengubah password. Gunakan minimal 8 karakter.
+                    Kosongkan jika tidak ingin mengubah password. Password
+                    minimal 8 karakter dan harus mengandung huruf besar, huruf
+                    kecil, serta angka.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -239,7 +247,11 @@ export default function AkunPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
-                  <Button type="submit" disabled={loading} variant="destructive">
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    variant="destructive"
+                  >
                     <Save className="mr-2 h-4 w-4" />
                     Update Password
                   </Button>

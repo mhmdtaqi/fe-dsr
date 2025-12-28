@@ -62,11 +62,11 @@ export default function AdminDashboard() {
   const { user, token, clearAuth } = useAuthStore();
   
   // State Data
-  const [rawData, setRawData] = useState<any[]>([]); // Data asli dari API
-  const [filteredData, setFilteredData] = useState<any[]>([]); // Data hasil filter
+  const [rawData, setRawData] = useState<any[]>([]); 
+  const [filteredData, setFilteredData] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
 
-  // State Filter
+  // State Filter (KHUSUS UNTUK TABEL PEMINJAMAN DI BAWAH)
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -84,11 +84,10 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
-  // Effect untuk Filter Otomatis
+  // Effect untuk Filter Tabel Peminjaman
   useEffect(() => {
     let result = rawData;
 
-    // 1. Filter Search (Nama Peminjam atau Agenda)
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       result = result.filter(
@@ -98,7 +97,6 @@ export default function AdminDashboard() {
       );
     }
 
-    // 2. Filter Status Verifikasi
     if (statusFilter !== "all") {
       result = result.filter((item) => {
         const verif = item.verifikasi || item.status_verifikasi || "pending";
@@ -132,13 +130,14 @@ export default function AdminDashboard() {
       }, token!);
       toast.dismiss();
       toast.success(`Berhasil ${status}`);
-      fetchPeminjaman(); // Refresh Data
+      fetchPeminjaman();
     } catch (error: any) {
       toast.dismiss();
       toast.error("Gagal verifikasi", { description: error.message });
     }
   };
 
+  // --- LOGIC MENU KARTU DIPERBAIKI ---
   const renderCards = () => {
     if (!user) return null;
     const cards: any[] = [];
@@ -146,8 +145,15 @@ export default function AdminDashboard() {
 
     if (user.role === "kepala_bagian_akademik") {
       cards.push(
+        // Menu User
         { title: "User Civitas", description: "Kelola user mahasiswa/dosen", icon: <Users className="w-5 h-5 text-sky-600" />, onClick: () => nav("/admin/monitoring/users-civitas") },
         { title: "Staff & Prodi", description: "Kelola akun staff", icon: <Users className="w-5 h-5 text-green-600" />, onClick: () => nav("/admin/monitoring/users-staff") },
+        
+        // Menu Barang & Lokasi (DITAMBAHKAN UNTUK KABAG)
+        { title: "Data Barang", description: "Monitoring aset barang", icon: <Package className="w-5 h-5 text-purple-600" />, onClick: () => nav("/admin/monitoring/semua-barang") },
+        { title: "Data Lokasi", description: "Monitoring ruangan", icon: <MapPin className="w-5 h-5 text-orange-600" />, onClick: () => nav("/admin/monitoring/semua-lokasi") },
+        
+        // Laporan
         { title: "Laporan", description: "Rekap data peminjaman", icon: <FileText className="w-5 h-5 text-blue-600" />, onClick: () => nav("/admin/laporan"), variant: "outline" }
       );
     } else if (user.role === "staff") {
@@ -186,26 +192,26 @@ export default function AdminDashboard() {
           <p className="text-slate-600">Halo {user?.nama}, selamat bekerja.</p>
         </div>
 
-        {/* Menu Cards */}
+        {/* Menu Cards (Akses ke Halaman Lain yang punya Filter Sendiri) */}
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-800"><Activity className="w-5 h-5 text-sky-600" /> Akses Cepat</h2>
           {renderCards()}
         </div>
 
-        {/* Tabel Section */}
+        {/* Tabel Section (Hanya untuk Peminjaman Masuk) */}
         <Card>
           <CardHeader className="bg-white border-b px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-semibold">Permintaan Peminjaman</CardTitle>
-                <Badge variant="outline">{filteredData.length} Data</Badge>
+                <CardTitle className="text-base font-semibold">Permintaan Peminjaman Masuk</CardTitle>
+                <Badge variant="outline">{filteredData.length} Request</Badge>
             </div>
             
-            {/* --- FILTER & SEARCH UI --- */}
+            {/* Filter Khusus Tabel Ini */}
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
                     <Input 
-                        placeholder="Cari nama / agenda..." 
+                        placeholder="Cari peminjam..." 
                         className="pl-9 h-9 w-full sm:w-[200px]" 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -218,7 +224,7 @@ export default function AdminDashboard() {
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
-                        <option value="all">Semua Status</option>
+                        <option value="all">Semua</option>
                         <option value="pending">Pending</option>
                         <option value="diterima">Diterima</option>
                         <option value="ditolak">Ditolak</option>

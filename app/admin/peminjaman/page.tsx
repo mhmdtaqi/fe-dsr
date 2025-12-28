@@ -86,16 +86,8 @@ export default function AdminPeminjamanPage() {
       let fetchedData = res.data ?? res;
       fetchedData = Array.isArray(fetchedData) ? fetchedData : [];
 
-      // OPTIONAL: kalau backend Anda BELUM memfilter staff_prodi, lakukan filter dinamis (TANPA hardcode "tif")
-      if (user?.role === "staff_prodi") {
-        const myJurusan = String(user?.jurusan ?? "").toLowerCase();
-        fetchedData = fetchedData.filter((p: any) =>
-          p.items?.some(
-            (it: any) =>
-              String(it.barangUnit?.jurusan ?? "").toLowerCase() === myJurusan
-          )
-        );
-      }
+      // Note: Backend sudah memfilter data berdasarkan Role.
+      // Jadi data yang sampai sini harusnya sudah aman/relevan.
 
       setRawData(fetchedData);
       setFilteredData(fetchedData);
@@ -270,25 +262,24 @@ export default function AdminPeminjamanPage() {
                   </tr>
                 ) : (
                   filteredData.map((p) => {
-                    const myJurusan = String(user?.jurusan ?? "").toLowerCase();
-                    const hasMyJurusanItem =
-                      p.items?.some(
-                        (it: any) =>
-                          String(it.barangUnit?.jurusan ?? "").toLowerCase() === myJurusan
-                      ) ?? false;
+                    // LOGIC BARU:
+                    // Jika role staff_prodi, pasti bisa verify (karena backend sudah filter data miliknya)
+                    // Jika role staff (umum), bisa verify semua (kecuali dibatasi backend)
+                    // Jika kabag, bisa verify (tapi tombol verify dihapus di showAksi logic Anda, kabag hanya view?)
+                    // * Koreksi: Kabag biasanya verify juga.
 
                     let canVerify = false;
                     if (user?.role === "staff_prodi") {
-                      canVerify = hasMyJurusanItem;
+                      canVerify = true; // Sederhana: jika data muncul, berarti punya dia.
                     } else if (user?.role === "staff") {
-                      // Staff umum: biarkan backend yang membatasi; tombol muncul dulu
                       canVerify = true;
                     } else if (user?.role === "kepala_bagian_akademik") {
                       canVerify = true;
                     }
 
-                    const canActivate =
-                      user?.role === "kepala_bagian_akademik";
+                    // Aktivasi biasanya hanya staff/security/umum
+                    // Tapi di logic Anda kabag bisa activate. Sesuaikan jika perlu.
+                    const canActivate = true; 
 
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">

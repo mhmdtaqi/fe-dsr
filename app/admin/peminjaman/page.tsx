@@ -3,21 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { 
-  ClipboardList, 
-  Filter, 
-  Search, 
-  CheckCircle, 
-  XCircle, 
-  Play, 
-  RotateCcw, 
-  QrCode 
+import {
+  ClipboardList,
+  CheckCircle,
+  XCircle,
+  Play,
+  RotateCcw,
+  QrCode,
+  Search,
+  Filter,
+  Loader2,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
@@ -29,59 +31,84 @@ export default function AdminPeminjamanPage() {
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
 
-  const [data, setData] = useState<Peminjaman[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [verifFilter, setVerifFilter] = useState<string>("");
+  // State Data
+  const [rawData, setRawData] = useState<Peminjaman[]>([]);
+  const [filteredData, setFilteredData] = useState<Peminjaman[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Load Data
-  const loadData = async () => {
+  // State Filter UI
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [verifFilter, setVerifFilter] = useState("all");
+
+  // 1. Initial Load
+  useEffect(() => {
     if (!token || !user) {
       clearAuth();
       router.replace("/login");
       return;
     }
-
     if (!allowedRoles.includes(user.role)) {
       router.replace("/peminjaman");
       return;
     }
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // 2. Logic Filter Frontend
+  useEffect(() => {
+    let result = rawData;
+
+    // Filter Search (Nama / Agenda)
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.User?.nama?.toLowerCase().includes(lower) ||
+          item.Agenda?.toLowerCase().includes(lower)
+      );
+    }
+
+    // Filter Status Peminjaman
+    if (statusFilter !== "all") {
+      result = result.filter((item) => item.status === statusFilter);
+    }
+
+    // Filter Status Verifikasi
+    if (verifFilter !== "all") {
+      result = result.filter((item) => {
+        const verif = item.verifikasi || item.status_verifikasi || "pending";
+        return verif === verifFilter;
+      });
+    }
+
+    setFilteredData(result);
+  }, [searchTerm, statusFilter, verifFilter, rawData]);
+
+  // Load Data dari API
+  const loadData = async () => {
     setLoading(true);
-
     try {
-      const params = new URLSearchParams();
-      if (statusFilter) params.set("status", statusFilter);
-      if (verifFilter) params.set("verifikasi", verifFilter);
-
-      const path = `/peminjaman${params.toString() ? `?${params.toString()}` : ""}`;
-      const res = await apiFetch(path, {}, token);
+      // Ambil SEMUA data dulu, baru filter di frontend agar search real-time cepat
+      const res = await apiFetch(`/peminjaman`, {}, token);
       let fetchedData = res.data ?? res;
+      fetchedData = Array.isArray(fetchedData) ? fetchedData : [];
 
       // Filter khusus staff_prodi (hanya lihat barang jurusan TIF)
-      if (user.role === "staff_prodi") {
+      if (user?.role === "staff_prodi") {
         fetchedData = fetchedData.filter((p: any) =>
           p.items?.some((item: any) => item.barangUnit?.jurusan === "tif")
         );
       }
 
-      setData(Array.isArray(fetchedData) ? fetchedData : []);
+      setRawData(fetchedData);
+      setFilteredData(fetchedData);
     } catch (err: any) {
-      console.error("LOAD ERROR", err);
       toast.error("Gagal memuat data", { description: err.message });
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleFilter = (e: React.FormEvent) => {
-    e.preventDefault();
-    loadData();
   };
 
   // --- ACTIONS ---
@@ -94,7 +121,7 @@ export default function AdminPeminjamanPage() {
       }, token!);
       toast.dismiss();
       toast.success(`Peminjaman ${verifikasi}`);
-      loadData();
+      loadData(); // Reload data terbaru
     } catch (err: any) {
       toast.dismiss();
       toast.error("Gagal verifikasi", { description: err.message });
@@ -119,7 +146,7 @@ export default function AdminPeminjamanPage() {
       toast.loading("Menyelesaikan peminjaman...");
       await apiFetch(`/peminjaman/return/${id}`, { method: "PUT" }, token!);
       toast.dismiss();
-      toast.success("Peminjaman Selesai & Barang Kembali");
+      toast.success("Peminjaman Selesai");
       loadData();
     } catch (err: any) {
       toast.dismiss();
@@ -128,7 +155,7 @@ export default function AdminPeminjamanPage() {
   };
 
   const isStaffProdiItem = (jenis: string) => ["Proyektor", "Microphone", "Sound System"].includes(jenis);
-  const showAksi = user?.role !== "kepala_bagian_akademik"; // Kabag hanya monitoring/verify, biasanya staff yg scan/aktifkan
+  const showAksi = user?.role !== "kepala_bagian_akademik"; 
 
   return (
     <motion.div
@@ -144,53 +171,73 @@ export default function AdminPeminjamanPage() {
           <h1 className="text-2xl font-bold text-slate-900">Manajemen Peminjaman</h1>
         </div>
 
-        {/* Filter Section */}
-        <Card>
+        {/* --- FILTER & SEARCH CARD --- */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Filter className="w-4 h-4" /> Filter Data
+                </CardTitle>
+                <Badge variant="secondary">{filteredData.length} Item</Badge>
+            </div>
+          </CardHeader>
           <CardContent className="p-4">
-            <form onSubmit={handleFilter} className="flex flex-wrap items-end gap-4">
-              <div className="space-y-1 w-full sm:w-auto">
-                <Label className="text-xs font-semibold text-slate-500 uppercase">Status</Label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full sm:w-40 border rounded-md px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 transition-colors focus:ring-2 focus:ring-slate-200 outline-none"
-                >
-                  <option value="">Semua Status</option>
-                  <option value="booking">Booking</option>
-                  <option value="aktif">Aktif</option>
-                  <option value="selesai">Selesai</option>
-                  <option value="batal">Batal</option>
-                </select>
-              </div>
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+                {/* Search Input */}
+                <div className="w-full md:flex-1 space-y-1">
+                    <Label className="text-xs font-medium text-slate-500">Pencarian</Label>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                        <Input 
+                            placeholder="Cari nama peminjam atau agenda..." 
+                            className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
 
-              <div className="space-y-1 w-full sm:w-auto">
-                <Label className="text-xs font-semibold text-slate-500 uppercase">Verifikasi</Label>
-                <select
-                  value={verifFilter}
-                  onChange={(e) => setVerifFilter(e.target.value)}
-                  className="w-full sm:w-40 border rounded-md px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 transition-colors focus:ring-2 focus:ring-slate-200 outline-none"
-                >
-                  <option value="">Semua Verifikasi</option>
-                  <option value="pending">Pending</option>
-                  <option value="diterima">Diterima</option>
-                  <option value="ditolak">Ditolak</option>
-                </select>
-              </div>
+                {/* Filter Status Peminjaman */}
+                <div className="w-full md:w-48 space-y-1">
+                    <Label className="text-xs font-medium text-slate-500">Status Peminjaman</Label>
+                    <select
+                        className="w-full h-10 px-3 rounded-md border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">Semua Status</option>
+                        <option value="booking">Booking</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="selesai">Selesai</option>
+                        <option value="batal">Batal</option>
+                    </select>
+                </div>
 
-              <Button type="submit" className="gap-2">
-                <Filter className="w-4 h-4" /> Terapkan Filter
-              </Button>
-            </form>
+                {/* Filter Status Verifikasi */}
+                <div className="w-full md:w-48 space-y-1">
+                    <Label className="text-xs font-medium text-slate-500">Status Verifikasi</Label>
+                    <select
+                        className="w-full h-10 px-3 rounded-md border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all"
+                        value={verifFilter}
+                        onChange={(e) => setVerifFilter(e.target.value)}
+                    >
+                        <option value="all">Semua Verifikasi</option>
+                        <option value="pending">Pending</option>
+                        <option value="diterima">Diterima</option>
+                        <option value="ditolak">Ditolak</option>
+                    </select>
+                </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Table Section */}
-        <Card className="overflow-hidden border-slate-200">
+        {/* --- TABLE CARD --- */}
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
                 <tr>
-                  <th className="px-4 py-3 w-[50px]">ID</th>
+                  <th className="px-4 py-3 w-[60px]">ID</th>
                   <th className="px-4 py-3">Peminjam</th>
                   <th className="px-4 py-3">Agenda</th>
                   <th className="px-4 py-3">Items / Lokasi</th>
@@ -199,25 +246,30 @@ export default function AdminPeminjamanPage() {
                   {showAksi && <th className="px-4 py-3 text-right">Aksi</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500">Memuat data peminjaman...</td>
+                    <td colSpan={7} className="p-12 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="animate-spin h-6 w-6 text-slate-400" />
+                            <span>Memuat data...</span>
+                        </div>
+                    </td>
                   </tr>
-                ) : data.length === 0 ? (
+                ) : filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500">
-                      Tidak ada data peminjaman yang sesuai filter.
+                    <td colSpan={7} className="p-12 text-center text-slate-500">
+                      <p className="font-medium text-slate-900">Tidak ada data ditemukan.</p>
+                      <p className="text-xs">Coba sesuaikan filter pencarian Anda.</p>
                     </td>
                   </tr>
                 ) : (
-                  data.map((p) => {
+                  filteredData.map((p) => {
                     const isStaffProdiLoan = p.items?.some((item: any) => isStaffProdiItem(item.barangUnit?.dataBarang?.jenis_barang));
                     const semuaBarangUmum = p.items?.every((item: any) => item.barangUnit?.jurusan === "umum");
                     const lokasiUmum = !p.kodeLokasi || p.lokasi?.jurusan === "umum";
                     const isUmumLoan = semuaBarangUmum && lokasiUmum;
 
-                    // Permission Logic
                     const canVerify = 
                       (user?.role === "staff_prodi" && isStaffProdiLoan) ||
                       (user?.role === "kepala_bagian_akademik" && !isStaffProdiLoan) ||
@@ -226,7 +278,7 @@ export default function AdminPeminjamanPage() {
                     const canActivate = user?.role === "kepala_bagian_akademik" && !isStaffProdiLoan;
                     
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="px-4 py-3 font-medium text-slate-700">#{p.id}</td>
                         <td className="px-4 py-3">
                           <div className="font-medium text-slate-900">{p.user?.nama ?? "-"}</div>
@@ -247,15 +299,15 @@ export default function AdminPeminjamanPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className="capitalize">{p.status}</Badge>
+                          <Badge variant="outline" className="capitalize font-normal text-slate-600 border-slate-300">{p.status}</Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Badge 
                             variant="secondary" 
-                            className={`capitalize ${
-                              p.verifikasi === 'diterima' ? 'bg-emerald-100 text-emerald-700' :
-                              p.verifikasi === 'ditolak' ? 'bg-red-100 text-red-700' :
-                              'bg-amber-100 text-amber-700'
+                            className={`capitalize font-medium ${
+                              p.verifikasi === 'diterima' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' :
+                              p.verifikasi === 'ditolak' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                              'bg-amber-100 text-amber-700 hover:bg-amber-200'
                             }`}
                           >
                             {p.verifikasi || 'pending'}
@@ -263,8 +315,7 @@ export default function AdminPeminjamanPage() {
                         </td>
                         {showAksi && (
                           <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2 flex-wrap">
-                              {/* --- TOMBOL VERIFIKASI --- */}
+                            <div className="flex items-center justify-end gap-2 flex-wrap opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                               {p.status === 'booking' && (p.verifikasi === 'pending' || !p.verifikasi) && canVerify && (
                                 <>
                                   <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => handleVerify(p.id, "diterima")}>
@@ -276,21 +327,18 @@ export default function AdminPeminjamanPage() {
                                 </>
                               )}
 
-                              {/* --- TOMBOL AKTIVASI --- */}
                               {p.status === 'booking' && p.verifikasi === 'diterima' && canActivate && (
                                 <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700" onClick={() => handleActivate(p.id)}>
                                   <Play className="w-3 h-3 mr-1" /> Aktifkan
                                 </Button>
                               )}
 
-                              {/* --- TOMBOL RETURN --- */}
                               {p.status === 'aktif' && canActivate && (
                                 <Button size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={() => handleReturn(p.id)}>
                                   <RotateCcw className="w-3 h-3 mr-1" /> Selesai
                                 </Button>
                               )}
 
-                              {/* --- TOMBOL SCAN --- */}
                               <Button size="sm" variant="outline" className="h-7 text-xs border-slate-300" onClick={() => router.push(`/admin/scan?kode=PINJAM-${p.id}`)}>
                                 <QrCode className="w-3 h-3 mr-1" /> Scan
                               </Button>

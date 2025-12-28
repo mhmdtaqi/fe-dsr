@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { LogIn, Mail, Lock, AlertCircle } from "lucide-react";
+import { LogIn, Mail, Lock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { toast } from "sonner"; // Pakai sonner
+import { toast } from "sonner";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -62,12 +62,15 @@ export default function LoginPage() {
 
       toast.success(`Selamat datang, ${user.nama}!`);
 
-      // Redirect sesuai role
+      // --- LOGIC REDIRECT UPDATE ---
       if (user.role === "civitas_faste") {
+        // User biasa ke halaman peminjaman saya
         router.replace("/peminjaman");
       } else {
-        router.replace("/admin/peminjaman");
+        // Admin (Staff, Staff Prodi, Kabag) ke Dashboard Utama (Monitoring)
+        router.replace("/admin/monitoring");
       }
+      
     } catch (err: any) {
       console.error("LOGIN ERROR", err);
       toast.error("Login Gagal", {

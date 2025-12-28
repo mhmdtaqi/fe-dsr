@@ -61,14 +61,12 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, token, clearAuth } = useAuthStore();
   
-  // State Data Asli
-  const [rawData, setRawData] = useState<any[]>([]);
-  // State Data yang Ditampilkan (Hasil Filter)
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  
+  // State Data
+  const [rawData, setRawData] = useState<any[]>([]); // Data asli dari API
+  const [filteredData, setFilteredData] = useState<any[]>([]); // Data hasil filter
   const [loading, setLoading] = useState(true);
 
-  // State Filter UI
+  // State Filter
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -86,11 +84,11 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
-  // Effect untuk menjalankan filter setiap kali search/status berubah
+  // Effect untuk Filter Otomatis
   useEffect(() => {
     let result = rawData;
 
-    // 1. Filter Search (Nama User atau Agenda)
+    // 1. Filter Search (Nama Peminjam atau Agenda)
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       result = result.filter(
@@ -117,7 +115,7 @@ export default function AdminDashboard() {
       const res = await apiFetch("/peminjaman", {}, token!);
       const list = Array.isArray(res) ? res : res.data || [];
       setRawData(list);
-      setFilteredData(list); // Set awal
+      setFilteredData(list);
     } catch (error) {
       toast.error("Gagal memuat daftar peminjaman");
     } finally {

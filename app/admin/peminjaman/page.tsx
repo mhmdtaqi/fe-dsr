@@ -90,7 +90,6 @@ export default function AdminPeminjamanPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // PERBAIKAN DI SINI: token || undefined
       const res = await apiFetch(`/peminjaman`, {}, token || undefined);
       let fetchedData = res.data ?? res;
       fetchedData = Array.isArray(fetchedData) ? fetchedData : [];
@@ -111,17 +110,20 @@ export default function AdminPeminjamanPage() {
     }
   };
 
-  // --- ACTIONS ---
+  // --- ACTIONS (FIXED ENDPOINTS) ---
+  
   const handleVerify = async (id: number, verifikasi: "diterima" | "ditolak") => {
     try {
       toast.loading("Memproses verifikasi...");
-      await apiFetch(`/peminjaman/verify/${id}`, {
+      // FIX: URL menjadi /peminjaman/{id}/verifikasi dan body menggunakan status_verifikasi
+      await apiFetch(`/peminjaman/${id}/verifikasi`, {
         method: "PUT",
-        body: JSON.stringify({ verifikasi }),
-      }, token || undefined); // Update token di sini juga
+        body: JSON.stringify({ status_verifikasi: verifikasi }),
+      }, token || undefined);
+      
       toast.dismiss();
       toast.success(`Peminjaman ${verifikasi}`);
-      loadData(); // Reload data terbaru
+      loadData(); 
     } catch (err: any) {
       toast.dismiss();
       toast.error("Gagal verifikasi", { description: err.message });
@@ -131,7 +133,11 @@ export default function AdminPeminjamanPage() {
   const handleActivate = async (id: number) => {
     try {
       toast.loading("Mengaktifkan peminjaman...");
-      await apiFetch(`/peminjaman/activate/${id}`, { method: "PUT" }, token || undefined);
+      // FIX: URL menjadi /peminjaman/{id}/activate
+      await apiFetch(`/peminjaman/${id}/activate`, { 
+        method: "PUT" 
+      }, token || undefined);
+      
       toast.dismiss();
       toast.success("Peminjaman Aktif");
       loadData();
@@ -144,7 +150,11 @@ export default function AdminPeminjamanPage() {
   const handleReturn = async (id: number) => {
     try {
       toast.loading("Menyelesaikan peminjaman...");
-      await apiFetch(`/peminjaman/return/${id}`, { method: "PUT" }, token || undefined);
+      // FIX: URL menjadi /peminjaman/{id}/return
+      await apiFetch(`/peminjaman/${id}/return`, { 
+        method: "PUT" 
+      }, token || undefined);
+      
       toast.dismiss();
       toast.success("Peminjaman Selesai");
       loadData();

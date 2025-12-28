@@ -36,6 +36,7 @@ export default function EditUserPage() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(true);
 
   useEffect(() => {
     if (!token || !user) {
@@ -59,6 +60,12 @@ export default function EditUserPage() {
           password: "",
           role: userData.role || "",
         });
+        // Kabag cannot edit Civitas accounts
+        if (user?.role === "kepala_bagian_akademik" && userData.role === "civitas_faste") {
+          setCanEdit(false);
+        } else {
+          setCanEdit(true);
+        }
       } catch (err: any) {
         console.error("Fetch user error:", err);
         setError(err.message || "Failed to fetch user data");
@@ -153,6 +160,11 @@ export default function EditUserPage() {
             {message}
           </p>
         )}
+        {!canEdit && (
+          <p className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded px-3 py-2">
+            Anda tidak diizinkan mengubah akun Civitas. Mode read-only.
+          </p>
+        )}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
@@ -162,7 +174,7 @@ export default function EditUserPage() {
 
           <div className="space-y-1">
             <Label>Nama</Label>
-            <Input value={form.nama} onChange={handleChange("nama")} />
+            <Input value={form.nama} onChange={handleChange("nama")} disabled={!canEdit} />
           </div>
 
           <div className="space-y-1">
@@ -171,6 +183,7 @@ export default function EditUserPage() {
               type="email"
               value={form.email}
               onChange={handleChange("email")}
+              disabled={!canEdit}
             />
           </div>
 
@@ -179,7 +192,8 @@ export default function EditUserPage() {
             <select
               value={form.role}
               onChange={handleChange("role")}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              disabled={!canEdit}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
             >
               <option value="civitas_faste">Civitas FASTe</option>
               <option value="staff">Staff</option>
@@ -196,6 +210,7 @@ export default function EditUserPage() {
               type="password"
               value={form.password}
               onChange={handleChange("password")}
+              disabled={!canEdit}
             />
           </div>
 
@@ -208,7 +223,7 @@ export default function EditUserPage() {
             >
               Batal
             </Button>
-            <Button type="submit" size="sm" disabled={loading}>
+            <Button type="submit" size="sm" disabled={loading || !canEdit}>
               {loading ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
           </div>

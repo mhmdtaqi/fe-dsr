@@ -206,23 +206,27 @@ export default function ProfilPage() {
             <Separator />
 
             <p className="text-center text-xs text-slate-400">
-              Ingin mengubah data? Silakan akses menu Kelola Akun di bawah.
+              {user.role === "kepala_bagian_akademik"
+                ? "Ingin mengubah data? Silakan akses menu Kelola Akun di bawah."
+                : "Ingin mengubah data? Silakan hubungi administrator."}
             </p>
           </CardContent>
 
           <CardFooter className="flex gap-3 bg-slate-50/50 p-6 dark:bg-slate-900/50">
-            <Button
-              className="flex-1 gap-2"
-              variant="default"
-              onClick={() => router.push("/admin/akun")}
-            >
-              <Settings className="h-4 w-4" />
-              Kelola Akun
-            </Button>
+            {user.role === "kepala_bagian_akademik" && (
+              <Button
+                className="flex-1 gap-2"
+                variant="default"
+                onClick={() => router.push("/admin/akun")}
+              >
+                <Settings className="h-4 w-4" />
+                Kelola Akun
+              </Button>
+            )}
 
             <Button
               variant="destructive"
-              className="flex-1 gap-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40"
+              className={`${user.role === "kepala_bagian_akademik" ? "flex-1" : "w-full"} gap-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40`}
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />

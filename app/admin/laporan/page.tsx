@@ -135,7 +135,7 @@ export default function LaporanPage() {
 
             <div className="space-y-1">
               <Label htmlFor="startDate" className="font-medium text-slate-700">
-                Tanggal Mulai (createdAt)
+                Tanggal Mulai 
               </Label>
               <Input
                 id="startDate"
@@ -147,7 +147,7 @@ export default function LaporanPage() {
 
             <div className="space-y-1">
               <Label htmlFor="endDate" className="font-medium text-slate-700">
-                Tanggal Selesai (createdAt)
+                Tanggal Selesai
               </Label>
               <Input
                 id="endDate"

@@ -8,7 +8,6 @@ import {
   Plus,
   Package,
   MapPin,
-  Search,
   Loader2,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -36,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
-// Tipe Data
+// Tipe Data (Sebaiknya disesuaikan dengan response API asli)
 type Peminjaman = any;
 type Barang = any;
 type Lokasi = any;
@@ -85,10 +84,11 @@ export default function PeminjamanPage() {
           {},
           token ? token : undefined
         );
-        setHistoryData(res.data ?? res);
+        // Pastikan kita mengambil array data yang benar
+        const data = Array.isArray(res) ? res : res.data || [];
+        setHistoryData(data);
       } catch (err: any) {
         console.error("LOAD HISTORY ERROR", err);
-        // Error state bisa string null, jadi aman di sini
         setError(err.message || "Gagal memuat riwayat peminjaman");
       } finally {
         setLoadingHistory(false);
@@ -98,7 +98,7 @@ export default function PeminjamanPage() {
     loadHistory();
   }, [router, token, user, clearAuthStore]);
 
-  // 2. Fungsi Fetch Barang (Dipanggil saat Tab Barang aktif)
+  // 2. Fungsi Fetch Barang
   const fetchBarang = async () => {
     if (hasLoadedBarang || loadingBarang) return;
 
@@ -112,17 +112,14 @@ export default function PeminjamanPage() {
       setBarangList(res.data ?? res);
       setHasLoadedBarang(true);
     } catch (err: any) {
-      // FIX TYPE ERROR: Pastikan string valid
-      const msg = err?.message
-        ? String(err.message)
-        : "Gagal memuat data barang.";
+      const msg = err?.message ? String(err.message) : "Gagal memuat data barang.";
       toast.error("Gagal memuat barang", { description: msg });
     } finally {
       setLoadingBarang(false);
     }
   };
 
-  // 3. Fungsi Fetch Lokasi (Dipanggil saat Tab Lokasi aktif)
+  // 3. Fungsi Fetch Lokasi
   const fetchLokasi = async () => {
     if (hasLoadedLokasi || loadingLokasi) return;
 
@@ -132,10 +129,7 @@ export default function PeminjamanPage() {
       setLokasiList(res.data ?? res);
       setHasLoadedLokasi(true);
     } catch (err: any) {
-      // FIX TYPE ERROR: Pastikan string valid
-      const msg = err?.message
-        ? String(err.message)
-        : "Gagal memuat data lokasi.";
+      const msg = err?.message ? String(err.message) : "Gagal memuat data lokasi.";
       toast.error("Gagal memuat lokasi", { description: msg });
     } finally {
       setLoadingLokasi(false);
@@ -160,6 +154,14 @@ export default function PeminjamanPage() {
     } else {
       router.push(`/peminjaman/buat?type=location&kodeLokasi=${l.kode_lokasi}`);
     }
+  };
+
+  // Helper function untuk warna badge status
+  const getStatusBadgeVariant = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "diterima" || s === "approved" || s === "selesai") return "default"; // Hijau/Hitam
+    if (s === "ditolak" || s === "rejected") return "destructive"; // Merah
+    return "secondary"; // Abu-abu/Kuning (Pending)
   };
 
   return (
@@ -222,58 +224,60 @@ export default function PeminjamanPage() {
                   <TableRow>
                     <TableHead className="w-[80px]">ID</TableHead>
                     <TableHead>Agenda</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Verifikasi</TableHead>
+                    <TableHead>Status Peminjaman</TableHead>
+                    <TableHead>Status Verifikasi</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historyData.map((p) => (
-                    <TableRow key={p.id} className="group hover:bg-slate-50/80">
-                      <TableCell className="font-medium text-slate-600">
-                        #{p.id}
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {p.Agenda}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {p.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            p.verifikasi === "diterima"
-                              ? "default"
-                              : p.verifikasi === "ditolak"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                          className="capitalize"
-                        >
-                          {p.verifikasi}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/peminjaman/${p.id}`)}
-                          className="h-8 text-xs underline-offset-4 hover:underline"
-                        >
-                          Detail
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {historyData.map((p) => {
+                    // Cek field verifikasi yang mungkin berbeda nama
+                    const statusVerifikasi = p.verifikasi || p.status_verifikasi || p.approvalStatus;
+                    const isPending = !statusVerifikasi || statusVerifikasi === 'pending';
+
+                    return (
+                      <TableRow key={p.id} className="group hover:bg-slate-50/80">
+                        <TableCell className="font-medium text-slate-600">
+                          #{p.id}
+                        </TableCell>
+                        <TableCell className="font-medium max-w-[200px] truncate">
+                          {p.Agenda}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getStatusBadgeVariant(statusVerifikasi)}
+                            className={`capitalize ${
+                              isPending ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 hover:text-amber-800" : ""
+                            }`}
+                          >
+                            {statusVerifikasi || "Menunggu Verifikasi"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/peminjaman/${p.id}`)}
+                            className="h-8 text-xs underline-offset-4 hover:underline"
+                          >
+                            Detail
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
           </CardContent>
         </Card>
 
-        {/* Section Katalog dengan Lazy Loading */}
+        {/* Section Katalog */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold tracking-tight">
             Katalog Tersedia
@@ -293,28 +297,7 @@ export default function PeminjamanPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Info Bar Barang Terpilih */}
-            {selectedBarang && activeTab === "barang" && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 flex items-center justify-between"
-              >
-                <div className="text-sm text-blue-700">
-                  <span className="font-semibold">Barang Terpilih:</span>{" "}
-                  {selectedBarang.nup} -{" "}
-                  {selectedBarang.dataBarang?.jenis_barang}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-100 h-8"
-                  onClick={() => setSelectedBarang(null)}
-                >
-                  Batal
-                </Button>
-              </motion.div>
-            )}
+            
 
             {/* Tab Content Barang */}
             <TabsContent value="barang" className="mt-4 min-h-[200px]">
@@ -340,16 +323,10 @@ export default function PeminjamanPage() {
                     >
                       <CardHeader className="p-4 pb-2">
                         <div className="flex items-center justify-between">
-                          <Badge
-                            variant="outline"
-                            className="font-mono text-xs"
-                          >
+                          <Badge variant="outline" className="font-mono text-xs">
                             {b.nup}
                           </Badge>
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] uppercase"
-                          >
+                          <Badge variant="secondary" className="text-[10px] uppercase">
                             {b.status}
                           </Badge>
                         </div>
@@ -360,22 +337,6 @@ export default function PeminjamanPage() {
                           {b.dataBarang?.merek}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="p-4 pt-2">
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          variant={
-                            selectedBarang?.nup === b.nup
-                              ? "secondary"
-                              : "default"
-                          }
-                          onClick={() => setSelectedBarang(b)}
-                        >
-                          {selectedBarang?.nup === b.nup
-                            ? "Terpilih"
-                            : "Pilih Barang"}
-                        </Button>
-                      </CardContent>
                     </Card>
                   ))}
                 </div>
@@ -396,24 +357,14 @@ export default function PeminjamanPage() {
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {lokasiList.map((l) => (
-                    <Card
-                      key={l.kode_lokasi}
-                      className="transition-all hover:shadow-md"
-                    >
+                    <Card key={l.kode_lokasi} className="transition-all hover:shadow-md">
                       <CardHeader className="p-4 pb-2">
                         <div className="flex items-center justify-between">
-                          <Badge
-                            variant="outline"
-                            className="font-mono text-xs"
-                          >
+                          <Badge variant="outline" className="font-mono text-xs">
                             {l.kode_lokasi}
                           </Badge>
                           <Badge
-                            className={
-                              l.status === "tersedia"
-                                ? "bg-emerald-500"
-                                : "bg-slate-500"
-                            }
+                            className={l.status === "tersedia" ? "bg-emerald-500" : "bg-slate-500"}
                           >
                             {l.status}
                           </Badge>
@@ -422,17 +373,6 @@ export default function PeminjamanPage() {
                           {l.lokasi}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="p-4 pt-2">
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          onClick={() => handleSelectLokasi(l)}
-                        >
-                          {selectedBarang
-                            ? "Pinjam Barang di Sini"
-                            : "Pinjam Ruangan Ini"}
-                        </Button>
-                      </CardContent>
                     </Card>
                   ))}
                 </div>

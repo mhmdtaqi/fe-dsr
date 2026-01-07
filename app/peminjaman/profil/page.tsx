@@ -11,6 +11,8 @@ import {
   Mail,
   Briefcase,
   CreditCard,
+  Building2,
+  GraduationCap
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { jurusanLabels } from "@/lib/utils";
@@ -27,6 +29,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
+// --- Types ---
 type UserProfile = {
   nik: string;
   nama: string;
@@ -45,7 +48,7 @@ const roleLabel: Record<string, string> = {
 export default function ProfilPage() {
   const router = useRouter();
   const { user: storeUser, clearAuth } = useAuthStore();
-
+  
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,121 +77,102 @@ export default function ProfilPage() {
     }, 500);
   };
 
-  if (loading && !user)
-    return <LoadingOverlay isLoading={true} message="Memuat..." />;
-  if (!user) return null;
+  if (loading || !user) {
+    return <LoadingOverlay isLoading={true} message="Memuat profil..." />;
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-100px)]">
-      <LoadingOverlay isLoading={loading} message="Memproses..." />
-
+    <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-80px)] bg-slate-50/50">
       <motion.div
         className="w-full max-w-lg"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="mb-4">
+        {/* Tombol Kembali */}
+        <div className="mb-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/peminjaman")}
-            className="pl-0 hover:bg-transparent hover:text-slate-600"
+            className="pl-0 text-slate-500 hover:text-slate-900 hover:bg-transparent group"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Kembali ke Dashboard
           </Button>
         </div>
 
-        <Card className="shadow-md border-slate-200 bg-white">
-          <CardHeader>
+        <Card className="shadow-sm border-slate-200 bg-white overflow-hidden">
+          <CardHeader className="pb-4 bg-white">
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-xl font-bold text-slate-900">
-                  Informasi Akun
+                  Profil Saya
                 </CardTitle>
-                <CardDescription>
-                  Detail data diri Anda di sistem BMN FASTe.
+                <CardDescription className="mt-1">
+                  Informasi akun Civitas FASTE Anda.
                 </CardDescription>
               </div>
-              <div className="rounded-full bg-slate-100 p-2">
-                <User className="h-6 w-6 text-slate-500" />
+              <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                <User className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
           </CardHeader>
 
           <Separator />
 
-          <CardContent className="space-y-4 pt-6">
-            <div className="grid gap-4">
-              <SimpleInfoRow
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    Nama Lengkap
-                  </span>
-                }
-                value={user.nama}
-              />
+          <CardContent className="space-y-1 pt-6 px-6">
+            <SimpleInfoRow
+              icon={<User className="w-4 h-4" />}
+              label="Nama Lengkap"
+              value={user.nama}
+            />
+            <Separator className="my-3 opacity-50" />
 
-              <SimpleInfoRow
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <CreditCard className="h-4 w-4" />
-                    Nomor Induk (NIK)
-                  </span>
-                }
-                value={user.nik}
-              />
+            <SimpleInfoRow
+              icon={<CreditCard className="w-4 h-4" />}
+              label="Nomor Induk (NIM/NIP)"
+              value={user.nik}
+            />
+            <Separator className="my-3 opacity-50" />
 
-              <SimpleInfoRow
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </span>
-                }
-                value={user.email}
-              />
+            <SimpleInfoRow
+              icon={<Mail className="w-4 h-4" />}
+              label="Email"
+              value={user.email}
+            />
+            <Separator className="my-3 opacity-50" />
 
-              <SimpleInfoRow
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <Briefcase className="h-4 w-4" />
-                    Jurusan
-                  </span>
-                }
-                value={jurusanLabels[user.jurusan] ?? user.jurusan}
-              />
+            <SimpleInfoRow
+              icon={<GraduationCap className="w-4 h-4" />}
+              label="Jurusan"
+              value={jurusanLabels[user.jurusan] ?? user.jurusan}
+            />
+            <Separator className="my-3 opacity-50" />
 
-              <SimpleInfoRow
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <Briefcase className="h-4 w-4" />
-                    Role Akses
-                  </span>
-                }
-                value={roleLabel[user.role] || user.role}
-                isBadge
-              />
-            </div>
+            <SimpleInfoRow
+              icon={<Building2 className="w-4 h-4" />}
+              label="Role Akses"
+              value={roleLabel[user.role] || user.role}
+              isBadge
+            />
           </CardContent>
 
-          <CardFooter className="flex justify-between gap-3 bg-slate-50 px-6 py-4">
+          <CardFooter className="flex flex-col sm:flex-row gap-3 bg-slate-50 px-6 py-4 mt-4 border-t border-slate-100">
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="w-full sm:flex-1 bg-white border-slate-300 hover:bg-slate-50 text-slate-700"
               onClick={() => router.push("/peminjaman/akun")}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Kelola Akun
+              Pengaturan Akun
             </Button>
 
             <Button
               variant="destructive"
               size="sm"
-              className="flex-1 bg-white text-red-600 border border-red-200 hover:bg-red-50"
+              className="w-full sm:flex-1 bg-red-600 hover:bg-red-700 shadow-sm"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -201,25 +185,31 @@ export default function ProfilPage() {
   );
 }
 
-// Komponen baris info (bisa terima label berupa teks atau JSX)
+// --- Komponen Baris Info (Re-usable) ---
 function SimpleInfoRow({
   label,
   value,
   isBadge = false,
+  icon,
 }: {
-  label: ReactNode;
+  label: string;
   value: string;
   isBadge?: boolean;
+  icon: ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-1">
-      <span className="text-sm font-medium text-slate-500">{label}</span>
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-1 gap-1">
+      <div className="flex items-center gap-2.5 text-slate-500">
+        <div className="text-slate-400">{icon}</div>
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+
       {isBadge ? (
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800 mt-1 sm:mt-0 w-fit">
+        <span className="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 mt-1 sm:mt-0 w-fit">
           {value}
         </span>
       ) : (
-        <span className="text-sm font-semibold text-slate-900 mt-1 sm:mt-0 break-all sm:text-right">
+        <span className="text-sm font-semibold text-slate-900 break-all sm:text-right pl-7 sm:pl-0">
           {value}
         </span>
       )}
